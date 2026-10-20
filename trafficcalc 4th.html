@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrafficCalc – Intersection AI</title>
+<style>
+:root{
+  --navy:#17202f; --bg:#eef1f6; --panel:#fff; --side:#f6f8fb; --ink:#1b2433; --mute:#6b7688; --line:#dde3ec;
+  --blue:#2563eb; --teal:#0f9d8a; --orange:#e8832a; --red:#cf4545; --sel:#dce8fb;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:Lato,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+button{font:inherit;cursor:pointer;border:0;color:#fff;font-weight:700;font-size:12px;letter-spacing:.04em;padding:9px 18px;border-radius:5px;transition:filter .15s}
+button:hover{filter:brightness(1.1)} :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.b{background:var(--blue)}.t{background:var(--teal)}.o{background:var(--orange)}.r{background:var(--red)}.k{background:var(--navy)}
+header{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:46px;position:sticky;top:0;z-index:5}
+header b{font-size:16px;letter-spacing:.02em;width:190px}
+header span{font-size:12px;opacity:.85}
+.wrap{display:flex;flex:1}
+nav{width:190px;background:var(--side);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+nav a{padding:8px 12px;font-size:12.5px;color:var(--mute);border-radius:4px;cursor:pointer;user-select:none}
+nav a:hover{background:#eaeff6}
+nav a.on{background:var(--sel);color:var(--blue);font-weight:700}
+main{flex:1;padding:26px 34px;max-width:1100px}
+h1{font-size:22px;margin-bottom:4px} .sub{color:var(--mute);font-size:13px;margin-bottom:18px}
+h3{font-size:14px;margin-bottom:8px} p,li{font-size:12.5px;color:var(--mute);line-height:1.7} ul{list-style:none}
+.card{background:var(--panel);border-radius:8px;box-shadow:0 2px 8px rgba(23,32,47,.10);padding:16px 18px;border-left:4px solid var(--teal);margin-bottom:16px}
+.card.b{border-color:var(--blue)}.card.o{border-color:var(--orange)}.card.r{border-color:var(--red)}.card.k{border-color:var(--navy)}.card.t{border-color:var(--teal)}
+.card{color:var(--ink);font-weight:400;letter-spacing:0;padding:16px 18px;border-radius:8px}
+.grid{display:grid;gap:16px;margin-bottom:16px}.g2{grid-template-columns:2fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.grid .card{margin:0;display:flex;flex-direction:column;gap:6px}
+.card button{margin-top:auto;align-self:flex-start}
+.stat small{font-size:12px;font-weight:700;color:var(--ink)} .stat strong{font-size:22px;font-weight:700}
+.flow{font-size:12px;letter-spacing:.06em;color:var(--mute)}
+.tabs{display:flex;gap:8px;margin-bottom:16px}.tabs button{background:#e4e9f1;color:var(--mute)}.tabs button.on{background:var(--teal);color:#fff}
+.tabs button.on.v{background:var(--blue)}
+.ico{font-size:22px;color:var(--teal)}
+.bar{height:12px;background:#e4e9f1;border-radius:6px;overflow:hidden;flex:1}.bar i{display:block;height:100%;border-radius:6px;width:0;transition:width 1.2s ease}
+.prow{display:flex;align-items:center;gap:16px;margin:16px 0;font-size:13px;font-weight:700}.prow span:first-child{width:170px}.prow span:last-child{width:44px;text-align:right}
+.row{display:flex;align-items:center;gap:14px}.row .grow{flex:1}
+.tag{color:#fff;font-weight:700;font-size:12px;padding:8px 0;border-radius:5px;width:130px;text-align:center}
+.road{background:#3a414c;position:absolute}
+.heat{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:340px}.heat i{aspect-ratio:1;border-radius:6px}
+.pie{width:150px;height:150px;border-radius:50%;background:conic-gradient(#4a7bc8 0 42%,#c9504e 0 73%,#8fb04e 0 81%,#7b5ea7 0 93%,#4fa7b8 0 100%)}
+.leg{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:12.5px}.leg i{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:2px}
+.th{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mute)}
+.crow2{display:grid;grid-template-columns:1fr 2.2fr;gap:16px;margin-bottom:16px}.crow2 .card{margin:0}.in{font-size:12px;color:var(--mute);display:flex;flex-direction:column;gap:3px}.in input{width:90px;padding:6px;border:1px solid var(--line);border-radius:4px;font:inherit;color:var(--ink)}
+.cm{border-collapse:collapse;font-size:12px;margin:8px 0}.cm th{padding:6px 10px;color:var(--mute);font-weight:700}.cm td{width:80px;height:46px;text-align:center;font-weight:700;border:2px solid #fff}
+.ok{color:#14803f;font-weight:700}
+@media(max-width:820px){nav{display:none}main{padding:18px}.g2,.g3,.g4,.g5,.crow2{grid-template-columns:1fr}header b{width:auto}}
+@media(max-width:520px){.g2,.g3,.g4,.g5,.crow2{grid-template-columns:1fr}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header><b>TRAFFICCALC</b><span>Intersection AI</span><span>Kunal S. ▾</span></header>
+<div class="wrap"><nav id="nav" aria-label="Main"></nav><main id="main"></main></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const NAV=[["dash","Dashboard"],["input","Input Data"],["geo","Intersection"],["ped","Pedestrians"],["veh","Vehicles"],["spatial","Analysis"],["safety","Safety Index"],["prob","Problems"],["counter","Countermeasures"],["report","Reports"]];
+let files={video:"traffic_peak.mp4",xl:"counts.xlsx",cad:"intersection.pdf"};
+const stat=(l,v,c="b")=>`<div class="card ${c} stat"><small>${l}</small><strong>${v}</strong></div>`;
+const head=(t,s)=>`<h1>${t}</h1>${s?`<div class="sub">${s}</div>`:""}`;
+
+// ---- Index values (demo; replace with analysis output) ----
+// ---- Input parameters (in production these come from the video analysis) ----
+const S={win:60,mpp:.05,api:"http://localhost:8000",limit:30,basis:"avg",spdAvg:31.8,spdMax:42,tvAvg:406,tvMax:480,pvAvg:214,pvMax:260,ttc:2.9,wtPed:18.6,wtVeh:24.3,ttcN:.3,wtN:.3,
+ pedCount:1284,pedAvgV:1.24,pedMaxV:2.06,vehCount:2436,queue:18.4,conflicts:37,
+ w:{ttc:.5028,vs:.2562,tv:.1394,pv:.067,wt:.0348},
+ // PROVISIONAL placeholders: no calibrated bands exist yet for CRI/PRI/PEI, TTC or volume
+ th:{cri:4000,pri:1500,pei:100000,ttc:3,tv1:150,tv2:300,tv3:450,pv1:100,pv2:200,pv3:300}};
+function calc(){
+ const v=S.basis=="max"?S.spdMax:S.spdAvg,bad=[];
+ if(!(S.ttc>=.1))bad.push("TTC must be at least 0.1 s");
+ [["limit","speed limit"],["spdAvg","average speed"],["tvAvg","average traffic volume"],["pvAvg","average pedestrian volume"]].forEach(([k,n])=>{if(!(S[k]>0))bad.push(n+" must be above 0")});
+ if(["spd","tv","pv"].some(k=>S[k+"Max"]<S[k+"Avg"]))bad.push("max values must not be below average values");if(bad.length)return{ok:0,msg:bad.join("; ")+". Result: assessment incomplete (never shown as safe)."};
+ const VSn=S.spdMax/S.spdAvg,TVn=S.tvMax/S.tvAvg,PVn=S.pvMax/S.pvAvg,w=S.w;
+ const PSIraw=100*(w.ttc*S.ttcN+w.vs*VSn+w.tv*TVn+w.pv*PVn+w.wt*S.wtN);
+ return{ok:1,VSn,TVn,PVn,PSIraw,PSI:Math.min(100,Math.max(0,PSIraw)),SRI:v/S.limit,CRI:v*S.tvAvg/S.ttc,PRI:S.pvAvg*S.wtPed/S.ttc,PEI:S.pvAvg*S.tvAvg}}
+const PSI_B=[[30,"Low concern","t","Routine monitoring; maintain pedestrian facilities, signs, markings and unobstructed routes."],
+ [60,"Moderate concern","b","Inspect crossing location, markings, signs, visibility, vehicle speeds and waiting conditions."],
+ [80,"High concern","o","Prioritise pedestrian safety assessment; investigate speed, conflicts, refuge or controlled crossing options where justified."],
+ [100,"Critical concern","r","Detailed site assessment and applicable IRC warrant checks; stronger measures only where justified."]];
+const SRI_R={lt:["SRI < 1","t","Maintain signs/markings; monitor speed distribution and visibility."],
+ eq:["SRI = 1","b","Check full speed distribution and intersection conditions."],
+ gt:["SRI > 1","r","Investigate speeding, sight distance and suitable speed management; assess traffic calming only if appropriate."]};
+const GEN={CRI:["Maintain traffic controls; review conflict points, turning movements and TTC observations.","Prioritise conflict assessment; investigate speed, turning movements and crossing control; major treatments require site review."],
+ PRI:["Monitor waiting time, crossing opportunities and pedestrian waiting areas.","Investigate unsafe crossing attempts, long waits, TTC and signal/crossing arrangements."],
+ PEI:["Maintain pedestrian routes; review crossing placement and demand.","Assess crossing demand, width, refuge and control using peak-hour flows and applicable criteria."]};
+const DEF=[["Faded or missing markings","Inspect and renew applicable stop lines, lane markings and pedestrian crossings."],
+ ["Missing / unclear signs","Verify applicable regulatory and warning signs; recommend suitable signs and placement."],
+ ["Obstructed pedestrian route","Remove or relocate obstructions where practicable; maintain a continuous accessible route."],
+ ["Poor sight distance","Inspect parked vehicles, vegetation and roadside objects; improve visibility where practicable."],
+ ["Unsafe vehicle speeds","Investigate measured speeds and suitable speed-management measures."],
+ ["Missing / inadequate crossing","Assess pedestrian desire lines, demand, crossing location and applicable crossing-facility criteria."],
+ ["Excessive pedestrian waiting","Review waiting conditions and signal timing where signals exist."],
+ ["High turning conflicts","Review turning movements, conflict points, layout and pedestrian protection."]];
+const OBS={};
+const PV=[["Low","Maintain accessible pedestrian routes and suitable existing crossing facilities."],["Moderate","Review crossing placement, waiting areas and pedestrian access."],["High","Assess crossing width, refuge and signal provisions where appropriate."],["Very high","Prioritise a peak-hour pedestrian and vehicle-flow assessment to determine suitable crossing facilities."]];
+const VOL=[["Low","Maintain traffic controls and check that vehicle paths and pedestrian crossings remain clear."],["Moderate","Review turning movements, queues and pedestrian crossing arrangements."],["High","Assess intersection capacity, vehicle conflicts and need for additional traffic or pedestrian control."],["Very high","Conduct peak-hour traffic assessment; evaluate signal timing and crossing facilities where appropriate."]];
+function classify(){const c=calc();if(!c.ok)return null;
+ const p=Math.round(c.PSI),pb=PSI_B.find(b=>p<=b[0]),sr=SRI_R[Math.abs(c.SRI-1)<.005?"eq":c.SRI<1?"lt":"gt"],t=S.th;
+ const o=[{idx:"PSI",val:p+" / 100",label:pb[1],c:pb[2],rec:pb[3]},{idx:"SRI",val:c.SRI.toFixed(2),label:sr[0],c:sr[1],rec:sr[2]}];
+ ["CRI","PRI","PEI"].forEach(k=>{const hi=c[k]>=t[k.toLowerCase()];o.push({idx:k,val:Math.round(c[k]).toLocaleString(),label:hi?"High / critical":"Lower / moderate",c:hi?"r":"t",rec:GEN[k][+hi],prov:1})});
+ const vi=S.tvAvg<t.tv1?0:S.tvAvg<t.tv2?1:S.tvAvg<t.tv3?2:3,pi=S.pvAvg<t.pv1?0:S.pvAvg<t.pv2?1:S.pvAvg<t.pv3?2:3,low=S.ttc<t.ttc;
+ o.push({idx:"Traffic volume",val:S.tvAvg+" / interval",label:VOL[vi][0],c:["t","b","o","r"][vi],rec:VOL[vi][1],prov:1},
+  {idx:"TTC",val:S.ttc+" s",label:low?"Below threshold":"Acceptable",c:low?"r":"t",rec:low?"Review TTC observations, conflict events and pedestrian waiting conditions; investigate speed and crossing control.":"Continue monitoring TTC observations and conflict points.",prov:1});
+ o.splice(6,0,{idx:"Pedestrian volume",val:S.pvAvg+" / interval",label:PV[pi][0],c:["t","b","o","r"][pi],rec:PV[pi][1],prov:1});
+ const f={PSI:p>=61,SRI:c.SRI>1,CRI:c.CRI>=t.cri,PRI:c.PRI>=t.pri,PEI:c.PEI>=t.pei,TV:vi>=2,PV:pi>=2,faded:!!OBS[0],signs:!!OBS[1],obst:!!OBS[2],cross:!!OBS[5]};
+ f.MULTI=["PSI","SRI","CRI","PRI","PEI"].filter(k=>f[k]).length>=2;o.f=f;return o}
+const recs=()=>{const r=classify();return r?r.map(r=>`<div class="crow2"><div class="card ${r.c}"><div class="th">INDEX</div><h3>${r.idx} = ${r.val}</h3><span class="tag ${r.c}" style="width:auto;padding:5px 12px;align-self:flex-start">${r.label}</span>${r.prov?'<p style="font-size:11px">Provisional band</p>':''}</div><div class="card ${r.c}"><div class="th">RECOMMENDATION</div><p style="color:var(--ink)">${r.rec}</p></div></div>`).join(""):`<div class="card r"><h3>Assessment incomplete</h3><p>${calc().msg}</p></div>`};
+const sLive=()=>{const c=calc(),r=classify();if(!r)return recs();
+ return `<div class="grid g5">${r.slice(0,5).map(r=>`<div class="card ${r.c}" style="align-items:flex-start"><h3>${r.idx}</h3><p style="font-size:20px;color:var(--ink);font-weight:700">${r.val}</p><div class="tag ${r.c}" style="margin-top:auto;width:100%">${r.label}</div></div>`).join("")}</div>
+ <div class="card k"><h3>Calculation</h3><p>VSn = max ÷ avg speed = ${c.VSn.toFixed(3)} · TVn = ${c.TVn.toFixed(3)} · PVn = ${c.PVn.toFixed(3)}<br>PSI = 100 × (${S.w.ttc}·TTCn + ${S.w.vs}·VSn + ${S.w.tv}·TVn + ${S.w.pv}·PVn + ${S.w.wt}·WTn) = ${c.PSIraw.toFixed(1)}${c.PSIraw>100?" (capped at 100)":""}<br>SRI = speed ÷ limit = ${c.SRI.toFixed(3)} · CRI = speed × volume ÷ TTC · PRI = ped. volume × waiting ÷ TTC · PEI = ped. volume × traffic volume</p></div>`};
+// ---- Combined-condition rules (spec section 5). All are PROVISIONAL project rules. ----
+const KL={PSI:"High PSI",SRI:"High SRI",CRI:"High CRI",PRI:"High PRI",PEI:"High PEI",TV:"High traffic",PV:"High pedestrian volume",faded:"Faded markings",signs:"Missing/unclear signs",obst:"Obstructed pedestrian route",cross:"Missing crossing",MULTI:"Multiple high indices"};
+const RULES=[
+["PSI+SRI","Prioritise pedestrian safety; investigate speed management, crossing visibility and suitable crossing protection."],
+["PSI+CRI","Investigate pedestrian crossing conflicts, vehicle interactions, turning movements and crossing control."],
+["PSI+PRI","Investigate unsafe crossing attempts, waiting times and crossing opportunities."],
+["PSI+PEI","Assess pedestrian demand and crossing width, refuge and control arrangements."],
+["SRI+CRI","Investigate speeding and conflict locations; assess suitable speed management and intersection control."],
+["SRI+PRI","Investigate speed and prolonged pedestrian waiting together; review crossing opportunities."],
+["SRI+PEI","Assess speed management and pedestrian protection at high-demand locations."],
+["CRI+PRI","Review TTC observations, conflict events and pedestrian waiting conditions."],
+["CRI+PEI","Assess vehicle-pedestrian interaction points, turning movements and crossing control."],
+["PRI+PEI","Investigate pedestrian waiting and demand; review crossing capacity and signal timing where applicable."],
+["TV+PV","Prioritise joint traffic/pedestrian crossing assessment; evaluate suitable protection and control."],
+["TV+SRI","Investigate speed variation, conflicts and intersection operation."],
+["PV+PRI","Investigate long waits, crowding and crossing opportunities."],
+["TV+faded","Renew markings and assess whether movement and crossing paths are clearly delineated."],
+["PV+cross","Assess desire lines and applicable crossing warrants; determine a suitable facility."],
+["SRI+signs","Verify applicable limit and recommend suitable signs; investigate measured speeds separately."],
+["PSI+SRI+PRI","Prioritise pedestrian safety; investigate speeding, waiting conditions and crossing control together."],
+["PSI+CRI+PEI","Conduct pedestrian-vehicle conflict assessment; review demand, turning movements, TTC and crossing facilities."],
+["SRI+CRI+TV","Investigate speeding, queues and vehicle conflicts; assess suitable speed management and intersection control."],
+["PRI+PEI+PV","Investigate long waits, pedestrian crowding and crossing capacity; review signal timing where applicable."],
+["TV+PV+SRI","Prioritise combined speed and crossing assessment; investigate traffic calming and crossing protection."],
+["PSI+SRI+faded","Investigate speed-related pedestrian concerns; renew markings and assess crossing visibility/protection."],
+["CRI+PRI+SRI","Prioritise investigation of speed, TTC and waiting conditions; review conflict points and traffic control."],
+["PSI+PEI+PV+cross","Assess demand, desire lines and applicable criteria; recommend a suitable facility after assessment."],
+["PSI+CRI+PRI+PEI","Conduct comprehensive pedestrian safety/conflict assessment covering speed, demand, waiting, TTC and crossing control."],
+["TV+PV+faded+signs","Renew applicable markings and signs and assess traffic/pedestrian facility needs."],
+["MULTI+obst","Address obstruction where practicable, restore accessible movement and assess remaining concerns."]];
+// Priority (transparent rule): crossing facility -> engineering assessment; deficiency + 1 index -> routine maintenance;
+// PSI or 3+ conditions -> priority safety assessment; otherwise investigate.
+function comboHits(){const r=classify();if(!r)return[];return RULES.filter(([k])=>k.split("+").every(x=>r.f[x])).map(([k,t])=>{const ks=k.split("+"),n=ks.length,d=ks.some(x=>["faded","signs","obst"].includes(x));
+ return{ks,t,pr:ks.includes("cross")?["Engineering assessment required","r"]:d&&n==2?["Routine maintenance","t"]:ks.includes("PSI")||n>=3?["Priority safety assessment","o"]:["Investigate","b"]}})}
+const combo=()=>{const h=comboHits();return `<h3 style="margin:22px 0 10px">Combined conditions</h3>`+(h.length?h.map(h=>`<div class="card ${h.pr[1]}"><div class="th">TRIGGERED BY</div><p style="color:var(--ink);font-weight:700">${h.ks.map(x=>KL[x]).join(" + ")}</p><div class="th" style="margin-top:6px">RECOMMENDATION</div><p style="color:var(--ink)">${h.t}</p><span class="tag ${h.pr[1]}" style="width:auto;padding:5px 12px;align-self:flex-start">${h.pr[0]}</span><p style="font-size:11px">Provisional rule</p></div>`).join(""):`<p>No combined condition triggered.</p>`)};
+
+// ---- Video job (talks to server.py) ----
+const FO={};let JOB={state:"idle"},HEAT=[".1",".3",".5",".3",".1",".2",".4",".8",".6",".2",".3",".6",".9",".5",".3",".2",".5",".7",".4",".2",".1",".2",".3",".2",".1"];
+let COMP=[["Cars","#4a7bc8",42],["Two-wheelers","#c9504e",31],["Buses","#8fb04e",8],["Trucks","#7b5ea7",12],["Other","#4fa7b8",7]];
+const pieGrad=()=>{let a=0;return"conic-gradient("+COMP.map(([n,c,v])=>{const b=a;a+=v;return`${c} ${b}% ${a}%`}).join(",")+")"};
+function applyResult(r){Object.keys(r).forEach(k=>{if(k=="heat")HEAT=r.heat;else if(k=="comp")COMP=Object.entries(r.comp).map(([n,v],i)=>[n,["#4a7bc8","#c9504e","#8fb04e","#7b5ea7","#4fa7b8"][i%5],v]);else if(typeof S[k]=="number"&&r[k]!=null)S[k]=r[k]})}
+function jobUI(){const p=JOB.pct||0;[p,p,p,JOB.state=="done"?100:0].forEach((v,i)=>{const b=$("#pb"+i);if(b){b.style.width=v+"%";$("#pp"+i).textContent=Math.round(v)+"%"}});const m=$("#pst");if(m)m.textContent=JOB.msg||"";if(JOB.state=="done"&&$("#pgo"))$("#pgo").style.display=""}
+async function runJob(){
+ if(JOB.state!="idle"){jobUI();return}
+ JOB={state:"running",pct:0,msg:"Uploading video..."};let up=0;
+ try{
+  if(!FO.video)throw 0;
+  const fd=new FormData();fd.append("video",FO.video);fd.append("mpp",S.mpp);fd.append("window_s",S.win);
+  const r=await fetch(S.api+"/api/analyze",{method:"POST",body:fd});up=1;const{job_id}=await r.json();JOB.id=job_id;
+  while(JOB.state=="running"){await new Promise(z=>setTimeout(z,1000));const j=await(await fetch(S.api+"/api/jobs/"+job_id)).json();
+   if(j.state=="error")throw new Error(j.error);JOB.pct=j.pct;JOB.msg=j.phase=="parameters"?"Calculating parameters...":"Detecting and tracking... "+j.pct+"%";
+   if(j.state=="done"){applyResult(j.result);JOB.state="done";JOB.msg="Done. Parameters updated from the video."}jobUI()}
+ }catch(e){
+  if(up){JOB={state:"idle",msg:"Backend error: "+(e.message||e)};jobUI();return}
+  JOB.msg=FO.video?"Backend not reachable at "+S.api+". DEMO mode with sample values.":"No video selected. DEMO mode with sample values.";
+  for(let p=0;p<=100;p+=5){JOB.pct=p;jobUI();await new Promise(z=>setTimeout(z,100))}
+  JOB.state="done";JOB.demo=1;jobUI()}}
+
+// ---- Exports ----
+function dump(){return{r:classify()||[],h:comboHits(),dfi:DEF.map(([p,t],n)=>[p,t,OBS[n]?"Yes":"No"])}}
+function expXLS(){if(!window.XLSX)return alert("SheetJS not loaded (internet is needed once).");const{r,h,dfi}=dump(),wb=XLSX.utils.book_new(),A=(n,a)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a),n);
+ A("Parameters",[["Parameter","Value"],...Object.entries(S).filter(([k,v])=>typeof v=="number"),...Object.entries(S.w).map(([k,v])=>["PSI weight "+k,v]),...Object.entries(S.th).map(([k,v])=>["Threshold (provisional) "+k,v])]);
+ A("Indices",[["Index","Value","Category","Recommendation","Status"],...r.map(x=>[x.idx,x.val,x.label,x.rec,x.prov?"Provisional":"Project band"]),...(r.length?[]:[[calc().msg]])]);
+ A("Combined",[["Triggered by","Recommendation","Priority"],...h.map(x=>[x.ks.map(k=>KL[k]).join(" + "),x.t,x.pr[0]])]);
+ A("Deficiencies",[["Deficiency","Recommendation","Observed"],...dfi]);
+ A("Heat map",[0,1,2,3,4].map(i=>HEAT.slice(i*5,i*5+5).map(Number)));
+ XLSX.writeFile(wb,"traffic_analysis_results.xlsx")}
+function expPDF(){if(!window.jspdf)return alert("jsPDF not loaded (internet is needed once).");const{r,h,dfi}=dump(),d=new jspdf.jsPDF();let y=18;
+ const L=(t,sz=10,b=0)=>{d.setFontSize(sz);d.setFont("helvetica",b?"bold":"normal");d.splitTextToSize(String(t),180).forEach(l=>{if(y>280){d.addPage();y=16}d.text(l,15,y);y+=sz*.5+1.5})};
+ L("TrafficCalc - Traffic & Intersection Safety Report",16,1);y+=2;L("Date: "+new Date().toLocaleDateString()+"  |  Volume interval: "+S.win+" s  |  Speed used: "+(S.basis=="max"?"maximum":"average"));y+=3;
+ L("Indices and recommendations",12,1);r.length?r.forEach(x=>{L(`${x.idx} = ${x.val}  [${x.label}${x.prov?", provisional":""}]`,10,1);L(x.rec)}):L(calc().msg);
+ y+=3;L("Combined conditions",12,1);h.length?h.forEach(x=>{L(x.ks.map(k=>KL[k]).join(" + ")+"  ("+x.pr[0]+")",10,1);L(x.t)}):L("None triggered.");
+ y+=3;L("Common site deficiencies",12,1);dfi.forEach(([p,t,o])=>L(`${p} (observed: ${o}): ${t}`));
+ y+=4;L("Decision-support suggestion; requires site-specific verification. Not a substitute for a road-safety audit or engineering design.",9);d.save("recommendation_report.pdf")}
+const expVid=()=>JOB.id&&JOB.state=="done"?open(S.api+"/api/jobs/"+JOB.id+"/video"):alert("No processed video yet. Run a video through the backend first.");
+function expHeat(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([[0,1,2,3,4].map(i=>HEAT.slice(i*5,i*5+5).join(",")).join("\n")],{type:"text/csv"}));a.download="heatmap.csv";a.click()}
+const dl=f=>/\.mp4$/.test(f)?expVid():/\.xlsx$/.test(f)?expXLS():/\.pdf$/.test(f)?expPDF():expHeat();
+const LIVE={safety:sLive,counter:()=>recs()+combo()};let curPage="dash";
+const get=p=>p.split(".").reduce((o,k)=>o[k],S);
+function setS(p,v){const k=p.split(".");let o=S;while(k.length>1)o=o[k.shift()];o[k[0]]=p=="basis"?v:(+v||0);const e=$("#live");if(e&&LIVE[curPage])e.innerHTML=LIVE[curPage]()}
+const grp=(t,items,x="")=>`<div class="card k"><h3>${t}</h3><div class="row" style="flex-wrap:wrap;align-items:flex-end">${items.map(([l,p])=>`<label class="in">${l}<input type="number" step="any" value="${get(p)}" oninput="setS('${p}',this.value)"></label>`).join("")}${x}</div></div>`;
+const CM={SVM:[[182,14,4],[19,141,12],[3,11,96]],KNN:[[176,19,5],[24,133,15],[6,14,90]]};
+function cmHtml(n){const m=CM[n],t=m.flat().reduce((a,b)=>a+b),a=m.reduce((q,r,i)=>q+r[i],0),L=["Low","Medium","High"],mx=Math.max(...m.flat());
+ return `<table class="cm"><tr><th></th>${L.map(l=>`<th>Pred. ${l}</th>`).join("")}</tr>${m.map((r,i)=>`<tr><th>Actual ${L[i]}</th>${r.map((v,j)=>`<td style="background:${i==j?'rgba(15,157,138,':'rgba(207,69,69,'}${(.12+.8*v/mx).toFixed(2)})">${v}</td>`).join("")}</tr>`).join("")}</table><p>${n} accuracy: <b>${(100*a/t).toFixed(1)}%</b> (${a} of ${t}) · demo values</p>`}
+function showCM(n,b){$("#cm").innerHTML=cmHtml(n);document.querySelectorAll("#cmt button").forEach(x=>x.classList.toggle("on",x==b))}
+const PAGES={
+dash:()=>head("Intersection Analysis Dashboard","Welcome back")+`
+ <h1 style="font-size:28px;margin:6px 0">Traffic &amp; Safety Analysis</h1>
+ <div class="sub">Process traffic data, calculate parameters and generate recommendations.</div>
+ <div class="grid g3">
+  <div class="card t"><h3>New Analysis</h3><p>Start a new intersection study<br>Upload video, Excel or drawing</p><button class="t" onclick="go('input')">START</button></div>
+  <div class="card b"><h3>Recent Project</h3><p>Bilaspur Intersection<br>Status: Ready</p><button class="b" onclick="go('report')">OPEN</button></div>
+  <div class="card o"><h3>Quick Summary</h3><p>Last analysis<br>Parameters: 24</p><button class="o" onclick="go('safety')">VIEW</button></div>
+ </div>
+ <div class="card k"><h3>Workflow</h3><div class="flow">INPUT DATA &nbsp;→&nbsp; DETECTION &nbsp;→&nbsp; PARAMETERS &nbsp;→&nbsp; SAFETY &nbsp;→&nbsp; PROBLEMS &nbsp;→&nbsp; COUNTERMEASURES</div></div>`,
+
+input:()=>head("Input Data","Use any combination of video, existing data and intersection drawings.")+`
+ <h3>Upload source files</h3>
+ <div class="grid g4">
+  ${[["video","b","▶","Traffic Video","MP4, MOV, AVI","Drag &amp; drop video","video/*",""],
+     ["xl","t","▦","Excel Dataset","XLSX, CSV","Existing traffic counts",".xlsx,.csv","t"],
+     ["img","o","▧","Image","JPG, PNG","Intersection photo/layout","image/*","o"],
+     ["cad","t","⌗","CAD / PDF","PDF, DWG export","Intersection geometry",".pdf,.dwg","t"]]
+   .map(([k,c,i,n,f,d,a])=>`<div class="card ${c}"><h3>${n}</h3><span class="ico" style="color:var(--${{b:'blue',t:'teal',o:'orange'}[c]})">${i}</span><p>${f}<br>${d}</p>
+   <input type="file" id="f-${k}" accept="${a}" hidden onchange="pick('${k}',this)"><button class="${c}" onclick="$('#f-${k}').click()">UPLOAD</button></div>`).join("")}
+ </div>
+ ${grp("Video analysis settings",[["Scale (m per pixel)","mpp"],["Volume interval (s)","win"]],`<label class="in">Backend URL<input type="text" style="width:190px" value="${S.api}" onchange="S.api=this.value"></label>`)}
+ <div class="card k"><div class="row"><div class="grow"><h3>Selected Files</h3><p id="files"></p></div><button class="t" onclick="go('process')">PROCESS</button></div></div>`,
+
+process:()=>head("Data Processing")+`<div class="card b"><h3>Processing: ${files.video||"no video"}</h3><p id="pst">Starting...</p></div>`+
+ [["Frame extraction","teal"],["Object detection","teal"],["Trajectory tracking","blue"],["Parameter calculation","orange"]].map(([n,c],i)=>`<div class="prow"><span>${n}</span><div class="bar"><i id="pb${i}" style="background:var(--${c})"></i></div><span id="pp${i}" style="color:var(--${c})">0%</span></div>`).join("")+
+ `<button class="t" id="pgo" onclick="go('geo')" style="display:none">CONTINUE TO INTERSECTION</button>`,
+
+geo:()=>head("Intersection Geometry")+`
+ <div class="grid g2">
+  <div class="card t"><h3>Intersection map</h3>
+   <div style="position:relative;height:300px;overflow:hidden">
+    <div class="road" style="left:0;right:0;top:110px;height:80px"></div><div class="road" style="top:0;bottom:0;left:calc(50% - 40px);width:80px"></div>
+    <div style="position:absolute;left:0;right:0;top:149px;border-top:3px dashed #fff;opacity:.8"></div><div style="position:absolute;top:0;bottom:0;left:50%;border-left:3px dashed #fff;opacity:.8"></div>
+    <button class="b" style="position:absolute;left:12px;top:10px">ROAD A</button><button class="t" style="position:absolute;right:12px;bottom:10px">ROAD B</button>
+   </div></div>
+  <div><div class="card b"><h3>Map controls</h3><ul><li>✓ Scale calibrated</li><li>✓ 4 approaches</li><li>✓ 2 pedestrian crossings</li><li>✓ 8 movement paths</li></ul></div>
+  <div class="card t"><h3>Reference points</h3><ul><li>Stop lines</li><li>Crossing lines</li><li>Entry / exit points</li><li>Conflict observation zone</li></ul></div></div>
+ </div>`,
+
+ped:()=>head("Pedestrian Analysis","Values come from the Input parameters on the Safety Index page.")+tabs("ped")+`
+ <div class="grid g3">${stat("Pedestrian Count",S.pedCount.toLocaleString(),"t")}${stat("Avg Velocity",S.pedAvgV+" m/s","b")}${stat("Max Velocity",S.pedMaxV+" m/s","b")}</div>
+ <div class="grid g3">${stat("Avg Waiting Time",S.wtPed+" s","o")}${stat("Time to Collision",S.ttc+" s","b")}${stat("Pedestrian Volume",S.pvAvg+" / interval","b")}</div>
+ <div class="card t"><h3>Movement tracking</h3><p>Tracked pedestrian trajectories • crossing events • waiting events • interaction events</p></div>`,
+
+veh:()=>head("Vehicle Analysis","Values come from the Input parameters on the Safety Index page.")+tabs("veh")+`
+ <div class="grid g4">${stat("Vehicle Count",S.vehCount.toLocaleString())}${stat("Average Speed",S.spdAvg+" km/h")}${stat("Maximum Speed",S.spdMax+" km/h")}${stat("Avg Waiting Time",S.wtVeh+" s","o")}</div>
+ <div class="grid g4">${stat("Time to Collision",S.ttc+" s","o")}${stat("Vehicle Volume",S.tvAvg+" / interval")}${stat("Queue Length",S.queue+" m","o")}${stat("Conflict Events",S.conflicts,"o")}</div>
+ <div class="card t"><h3>Composition of Vehicles</h3><div class="row" style="gap:40px;flex-wrap:wrap"><div class="pie" style="background:${pieGrad()}"></div>
+  <div class="leg">${COMP.map(([n,c,v])=>`<span><i style="background:${c}"></i>${n} ${v}%</span>`).join("")}</div></div></div>`,
+
+spatial:()=>head("Spatial Analysis")+`
+ <div class="grid g2">
+  <div class="card t"><h3>Heat Map</h3><div class="heat">${HEAT.map(a=>`<i style="background:${heat(+a)}"></i>`).join("")}</div></div>
+  <div><div class="card o"><h3>Thermal / Risk Map</h3><ul><li>East crossing: high exposure</li><li>South approach: high interaction</li><li>North approach: moderate congestion</li></ul></div>
+  <div class="card t"><h3>Graphs</h3><ul><li>Volume trend</li><li>Speed distribution</li><li>Waiting time</li><li>TTC distribution</li></ul></div></div>
+ </div>
+ <div class="card b"><h3>Confusion Matrix · risk classification</h3><div class="tabs" id="cmt"><button class="on" onclick="showCM('SVM',this)">SVM</button><button onclick="showCM('KNN',this)">KNN</button></div><div id="cm">${cmHtml("SVM")}</div></div>`,
+
+safety:()=>head("Safety Index Dashboard","Indices are calculated live from the input parameters below. Edit any value to match the video.")+`<div id="live">${sLive()}</div>`+
+ grp("Vehicle & speed",[["Speed limit (km/h)","limit"],["Avg speed (km/h)","spdAvg"],["Max speed (km/h)","spdMax"]],`<label class="in">Speed used for SRI / CRI<select onchange="setS('basis',this.value)" style="padding:6px;border:1px solid var(--line);border-radius:4px;font:inherit"><option value="avg"${S.basis=="avg"?" selected":""}>Average</option><option value="max"${S.basis=="max"?" selected":""}>Maximum</option></select></label>`)+
+ grp("Volumes (same time window)",[["Traffic avg","tvAvg"],["Traffic max","tvMax"],["Pedestrian avg","pvAvg"],["Pedestrian max","pvMax"]])+
+ grp("TTC & waiting",[["TTC (s)","ttc"],["Ped. waiting (s)","wtPed"],["TTCn (0–1)","ttcN"],["WTn (0–1)","wtN"]])+
+ grp("PSI weights",[["TTCn","w.ttc"],["VSn","w.vs"],["TVn","w.tv"],["PVn","w.pv"],["WTn","w.wt"]])+
+ grp("Thresholds (provisional)",[["CRI high","th.cri"],["PRI high","th.pri"],["PEI high","th.pei"],["TTC min (s)","th.ttc"],["Traffic moderate from","th.tv1"],["Traffic high from","th.tv2"],["Traffic very high from","th.tv3"],["Ped. moderate from","th.pv1"],["Ped. high from","th.pv2"],["Ped. very high from","th.pv3"]])+
+ `<p>TTCn and WTn are not defined in the notes, so they are entered directly. The PSI weights are read from the handwritten page (0.2562 for VSn is hard to read; the five weights then sum to 1.0002). Please confirm both.</p>`,
+
+prob:()=>head("Problem Identification","Common site deficiencies. These checks apply to every analysis, independent of index scores.")+
+ `<div class="grid g2" style="grid-template-columns:1fr 1fr">`+DEF.map(([p,r],n)=>`<div class="card ${n%2?'o':'r'}"><h3>${p}</h3><p>${r}</p><label class="in" style="flex-direction:row;align-items:center;gap:6px;margin-top:auto"><input type="checkbox" style="width:auto" ${OBS[n]?"checked":""} onchange="OBS[${n}]=this.checked"> Observed on site</label></div>`).join("")+`</div>
+ <p>Tick "Observed on site" to feed the combined-condition rules. Low-light and night-time conditions are excluded: the current video dataset was recorded in daylight.</p>`,
+
+counter:()=>head("Countermeasures","Values come from the Safety Index calculation. Each recommendation follows the range its value falls in.")+`<div id="live">${recs()+combo()}</div>
+ <p>Change speed limit, thresholds or TTC on the <a style="color:var(--blue);cursor:pointer" onclick="go('safety')">Safety Index</a> page. Decision-support suggestion; requires site-specific verification. Not a substitute for a road-safety audit or engineering design.</p>`,
+
+report:()=>head("Analysis Report")+`
+ <div class="grid g2">
+  <div class="card t"><h3>Report Preview</h3><p><b>TRAFFIC &amp; INTERSECTION SAFETY REPORT</b><br><br>Project: Bilaspur Intersection<br>Study period: Peak hour<br><br>✓ Input data summary<br>✓ Pedestrian &amp; vehicle parameters<br>✓ Heat / thermal maps<br>✓ Safety indices<br>✓ Problems<br>✓ Countermeasures</p></div>
+  <div><div class="card o"><h3>Export options</h3><p>PDF Report<br>Excel Results<br>Processed Video<br>Graphs &amp; Maps</p>
+   <div class="row" style="gap:6px;margin-top:8px"><button class="r" onclick="expPDF()">PDF</button><button class="t" onclick="expXLS()">EXCEL</button><button class="b" onclick="expVid()">VIDEO</button></div></div>
+  <div class="card b"><h3>Report status</h3><p>All analysis modules completed.<br>Ready for download.</p><button class="k" onclick="expPDF();expXLS();go('done')">DOWNLOAD ALL</button></div></div>
+ </div>`,
+
+done:()=>head("Complete Results")+`<div class="ok" style="margin-bottom:2px">Analysis completed successfully</div><div class="sub">Your intersection study is ready to export.</div>`+
+ [["Processed Video","traffic_peak_processed.mp4","b"],["Excel Results","traffic_analysis_results.xlsx","t"],["Graphs & Maps","traffic_visualizations.zip","t"],["Problem + Countermeasures","recommendation_report.pdf","o"]]
+ .map(([n,f,c])=>`<div class="card ${c}"><div class="row"><div class="grow"><h3>${n}</h3><p>${f}</p></div><button class="${c}" onclick="dl('${f}')">DOWNLOAD</button></div></div>`).join("")+
+ `<div class="card k"><h3 class="ok">✓ Complete</h3><p>Parameters calculated • safety indices evaluated • problems identified • countermeasures generated</p></div>`
+};
+
+function heat(a){const c=a<.3?[232,240,236]:a<.5?[250,214,170]:a<.7?[240,160,120]:[215,90,90];return`rgb(${c})`}
+function tabs(on){return`<div class="tabs"><button class="${on=='ped'?'on':''}" onclick="go('ped')">PEDESTRIAN</button><button class="${on=='veh'?'on v':''}" onclick="go('veh')">VEHICLE</button></div>`}
+function pick(k,el){if(el.files[0]){files[k]=el.files[0].name;FO[k]=el.files[0];JOB={state:"idle"};showFiles()}}
+function showFiles(){const f=$("#files");if(f)f.textContent=Object.values(files).join("     •     ")||"No files selected"}
+const parent={process:"input",done:"report"};
+function go(p){
+  location.hash=p;
+}
+function render(){
+  const p=PAGES[location.hash.slice(1)]?location.hash.slice(1):"dash";
+  curPage=p;$("#main").innerHTML=PAGES[p]();
+  const cur=parent[p]||p;
+  $("#nav").innerHTML=NAV.map(([k,n])=>`<a tabindex="0" class="${k==cur?'on':''}" onclick="go('${k}')" onkeydown="if(event.key==='Enter')go('${k}')">${n}</a>`).join("");
+  showFiles();
+  if(p==="process")runJob();
+  scrollTo(0,0);
+}
+addEventListener("hashchange",render);render();
+</script>
+</body>
+</html>
